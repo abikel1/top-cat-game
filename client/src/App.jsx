@@ -9,7 +9,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 
-const API_BASE = "http://localhost:4000";
+// 🔁 כתובת ה-API נלקחת מ-ENV בפרודקשן, ונופלת ל-localhost בפיתוח
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 export default function App() {
   const [users, setUsers] = useState([]);     // ה־Top N לרשימה
@@ -23,6 +25,7 @@ export default function App() {
     setErr("");
     try {
       const r = await fetch(`${API_BASE}/api/users/top?limit=10`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       if (Array.isArray(data)) setUsers(data);
       else setErr(data?.error || "Failed to load leaderboard");
@@ -37,6 +40,7 @@ export default function App() {
   const loadBottom3 = async () => {
     try {
       const r = await fetch(`${API_BASE}/api/users/bottom?limit=3`);
+      if (!r.ok) return;
       const data = await r.json();
       if (Array.isArray(data)) setBottom3(data);
     } catch {
@@ -51,16 +55,13 @@ export default function App() {
 
   // חישוב דרגת המשתמש בכרטיסים (האינדקס של הכרטיס + מיקום מהרשימה הכוללת)
   const rankLabel = (indexInBottom) => {
-    // אם אין users עדיין, נציג רק "Rank"
     if (!users.length) return `Rank`;
-    // המיקום של שלושת האחרונים ביחס למספר הכולל (last 3)
-    const lastRankStart = users.length - bottom3.length + 1; // לדוגמה: 8 משתמשים -> 8-3+1 = 6
+    const lastRankStart = users.length - bottom3.length + 1;
     return `Rank: #${lastRankStart + indexInBottom}`;
   };
 
   return (
     <Container maxWidth="md" sx={{ paddingTop: 3, paddingBottom: 6 }}>
-      {/* כותרת */}
       <Typography
         variant="h4"
         align="center"
@@ -70,7 +71,6 @@ export default function App() {
         🐱 Top Cats Leaderboard
       </Typography>
 
-      {/* שלושת המשתמשים בתחתית הדירוג */}
       <Grid container spacing={2} sx={{ marginBottom: 4 }}>
         {bottom3.map((u, i) => (
           <Grid item xs={12} sm={4} key={u.id}>
@@ -92,7 +92,6 @@ export default function App() {
         ))}
       </Grid>
 
-      {/* רשימת ה-Top */}
       <div className="leaderboard">
         {loading ? (
           <div style={{ textAlign: "center", padding: "30px 0" }}>
